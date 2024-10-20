@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy PHP app to Azure Web App - Medxchanged
 
 on:
@@ -27,9 +24,17 @@ jobs:
         with:
           files: 'composer.json'
 
-      - name: Run composer install if composer.json exists
+      - name: Validate composer.json and update lock file if necessary
         if: steps.check_files.outputs.files_exists == 'true'
-        run: composer validate --no-check-publish && composer install --prefer-dist --no-progress
+        run: |
+          composer validate --no-check-publish || exit 1
+          if [ -f "composer.lock" ]; then
+            composer outdated || composer update --no-interaction
+          fi
+
+      - name: Run composer install (forcefully install dependencies)
+        if: steps.check_files.outputs.files_exists == 'true'
+        run: composer install --prefer-dist --no-progress --no-scripts --ignore-platform-reqs
 
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
