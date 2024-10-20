@@ -18,26 +18,11 @@ jobs:
         with:
           php-version: '8.2'
 
-      - name: Check if composer.json exists
-        id: check_files
-        uses: andstor/file-existence-action@v1
-        with:
-          files: 'composer.json'
-
-      - name: Validate composer.json and update lock file if necessary
-        if: steps.check_files.outputs.files_exists == 'true'
-        run: |
-          composer validate --no-check-publish || exit 1
-          if [ -f "composer.lock" ]; then
-            composer outdated || composer update --no-interaction
-          fi
-
-      - name: Run composer install (forcefully install dependencies)
-        if: steps.check_files.outputs.files_exists == 'true'
-        run: composer install --prefer-dist --no-progress --no-scripts --ignore-platform-reqs
+      # Skipping composer install as vendor directory is already pushed
+      # Skipping node_modules setup as well if you have node_modules in the repo
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: zip release.zip ./* -r --exclude=*.git*
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
